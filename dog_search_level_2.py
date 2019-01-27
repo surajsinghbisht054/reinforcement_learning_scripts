@@ -23,66 +23,101 @@ The Codes. And yes! This is Compulsory.
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
                     Game :  Dog have to find bone
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
 Rules:
         Dog  looks like this  'O'
         Bone looks like this  '^'
         walls looks like this '#'
         floor looks like this '_'
+
+Description:
+    Using Negative Reward at every step dog spend to find bone
+
 '''
 
+# import modules
 import random
 import time
 import os
+import cPickle
+
+os.system('test')
+
 
 # Configuration
-ALPHA = 0.1
-GAMMA = 0.9
-EPLISON  = 0.5
-EPISODES = 10
-ACTIONS = ['left', 'right', 'top', 'bottom']
-TIMESLEEP = 0.01
-MINUSPOINT = -0.5
-PLUSPOINT = 1.0
-Debug = False
-IValue = [1,1,1,1]
+ALPHA    = 0.01   # learning rate 
+GAMMA    = 0.9   # discount factor
+EPLISON  = 0.9   # limit the changes <-- Random Decision Rate
+EPISODES = 20    # total episodes to try
+ACTIONS  = [     # supported actions
+        'left', 
+        'right', 
+        'top', 
+        'bottom'
+    ]
 
+TIMESLEEP       = 0.001    # refresh sleep time
+MINUSPOINT      = -1.0    # heavy minus point, when hit the walls 
+PLUSPOINT       = 5.0     # plus point, in the end <-- Not that much important, because we are using negative reward approach
+LATEMINUSPOINT  = -0.1    # because of time 
+Debug           = False   # debug feature
+IValue          = [       # initial values
+                    0,0,
+                    0,0
+                    ]
+BACKUP          = 'test/dog_search_coordinates.qtable'
 
 # (ALPHA*(( reward + GAMMA * pre_calculated_possibility) - pre_calculated_possibility) + pre_calculated_possibility)
 
-
+# board to collect episode print data
 tmpboard = []
+
+
 
 # Column = 14
 #  Row   = 14
 GROUND = [
     ['#' ,'#' ,'#' ,'#' ,'#' ,'#' ,'#' ,'#' ,'#' ,'#' ,'#' ,'#' ,'#' ,'#' ],
-    ['#', '_' ,'_' ,'_' ,'_' ,'_' ,'_' ,'_' ,'_' ,'_' ,'_' ,'_' ,'_' , '#' ],
-    ['#', '_' ,'_' ,'#' ,'_' ,'_' ,'_' ,'_' ,'_' ,'_' ,'_' ,'#' ,'#' , '#' ],
-    ['#', '_' ,'_' ,'#' ,'_' ,'_' ,'_' ,'_' ,'_' ,'_' ,'_' ,'#' ,'#' , '#' ],
-    ['#', '_' ,'_' ,'#' ,'_' ,'_' ,'#' ,'_' ,'_' ,'#' ,'_' ,'#' ,'_' , '#' ],
-    ['#', '_' ,'_' ,'#' ,'_' ,'_' ,'#' ,'_' ,'_' ,'#' ,'_' ,'#' ,'_' , '#' ],
-    ['#', '_' ,'_' ,'#' ,'#' ,'#' ,'#' ,'_' ,'_' ,'#' ,'_' ,'_' ,'_' , '#' ],
-    ['#', '_' ,'_' ,'_' ,'_' ,'_' ,'#' ,'_' ,'_' ,'_' ,'_' ,'_' ,'_' , '#' ],
-    ['#', '_' ,'_' ,'_' ,'_' ,'_' ,'_' ,'_' ,'_' ,'_' ,'#' ,'_' ,'_' , '#' ],
-    ['#', '_' ,'_' ,'_' ,'_' ,'_' ,'_' ,'_' ,'_' ,'_' ,'_' ,'_' ,'_' , '#' ],
-    ['#', '_' ,'#' ,'#' ,'#' ,'_' ,'_' ,'_' ,'_' ,'_' ,'#' ,'_' ,'_' , '#' ],
-    ['#', '_' ,'_' ,'_' ,'#' ,'_' ,'_' ,'_' ,'_' ,'_' ,'_' ,'_' ,'_' , '#' ],
+    ['#', '_' ,'#' ,'#' ,'_' ,'_' ,'#' ,'_' ,'_' ,'_' ,'_' ,'_' ,'_' , '#' ],
+    ['#', '_' ,'#' ,'_' ,'_' ,'_' ,'#' ,'_' ,'#' ,'#' ,'_' ,'#' ,'#' , '#' ],
+    ['#', '_' ,'#' ,'_' ,'_' ,'_' ,'#' ,'_' ,'_' ,'#' ,'_' ,'#' ,'_' , '#' ],
+    ['#', '_' ,'#' ,'#' ,'_' ,'_' ,'#' ,'#' ,'_' ,'#' ,'_' ,'#' ,'_' , '#' ],
+    ['#', '_' ,'#' ,'#' ,'#' ,'_' ,'#' ,'#' ,'_' ,'#' ,'#' ,'#' ,'_' , '#' ],
+    ['#', '_' ,'#' ,'#' ,'#' ,'_' ,'#' ,'_' ,'_' ,'#' ,'_' ,'_' ,'_' , '#' ],
+    ['#', '_' ,'#' ,'_' ,'#' ,'_' ,'#' ,'_' ,'#' ,'#' ,'_' ,'_' ,'_' , '#' ],
+    ['#', '_' ,'#' ,'_' ,'#' ,'_' ,'#' ,'_' ,'_' ,'_' ,'#' ,'_' ,'_' , '#' ],
+    ['#', '_' ,'#' ,'_' ,'_' ,'_' ,'#' ,'_' ,'_' ,'_' ,'#' ,'_' ,'#' , '#' ],
+    ['#', '_' ,'#' ,'_' ,'#' ,'_' ,'#' ,'#' ,'_' ,'#' ,'#' ,'_' ,'#' , '#' ],
+    ['#', '_' ,'#' ,'_' ,'#' ,'_' ,'#' ,'#' ,'_' ,'#' ,'#' ,'_' ,'_' , '#' ],
     ['#', '_' ,'_' ,'_' ,'#' ,'_' ,'_' ,'_' ,'_' ,'_' ,'_' ,'_' ,'^' , '#' ],
     ['#' ,'#' ,'#' ,'#' ,'#' ,'#' ,'#' ,'#' ,'#' ,'#' ,'#' ,'#' ,'#' ,'#' ],
 ]
 
+if os.path.exists(BACKUP):
+    tmpboard.append('[*] Using Pre-Calculated Weight.')
+    # load pre-calculated tables
+    Qtable = cPickle.load(open(BACKUP, 'r'))
 
-# Qtable
-Qtable = {
-}
+else:
+    tmpboard.append('[*] New Weight Calculation.')
+    # Qtable
+    Qtable = {
+    }
 
 # check Qtable state
 def check_state(PS):
+
+    # convert int list into string list
     ps = [str(i) for i in PS]
+
+    # join list values
     key = '_'.join(ps)
 
+    # check if its new key
     if key not in Qtable.keys():
+
         if Debug: print "[*] Adding new state : ", key
+
         #           left right top bottom
         Qtable[key] = IValue[:]
 
@@ -91,31 +126,44 @@ def check_state(PS):
 
 # print board
 def print_status(PS, episode, count, end):
+
     if not Debug: os.system('clear')
+
+    # copy ground
     ctmp = GROUND[:]
 
+    # iterate 
     for n,row in enumerate(ctmp):
         row = row[:]
         if n==PS[0]:
             row[PS[1]]='0'
             
         print ' '.join(row)
-    for i in tmpboard:
+
+    # print board data
+    for i in tmpboard[-10:]:
         print i
+
     print "[ Episode  : {} | Steps : {} ]".format(episode, count)
+
+    # print end game message banner
     if end:
         tmpboard.append("[ Episode  : {} | Steps : {} ]".format(episode, count))
+
+    # wait
     time.sleep(TIMESLEEP)
     return
 
 # choose action
 def choose_action(PS):
+
     key = check_state(PS)
 
     # limit value updating rate
     if (random.uniform(0.0, 1.0) > EPLISON) or (max(Qtable[key])==0):
         action = random.choice(ACTIONS)
         if Debug: print "[+] Random Action Selecting", action
+
     else:
         p = max(Qtable[key])
         action = ACTIONS[Qtable[key].index(p)]
@@ -125,8 +173,9 @@ def choose_action(PS):
 
 # get feedback
 def get_feedback(PS, AC):
+
     # default values
-    RW = 0
+    RW = LATEMINUSPOINT
     END = False
     _PS = PS[:]
 
@@ -201,4 +250,6 @@ def main():
 # trigger 
 if __name__ == '__main__':
     main()
-
+    f = open(BACKUP, 'w')
+    cPickle.dump(Qtable, f)
+    f.close()

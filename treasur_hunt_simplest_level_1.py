@@ -83,7 +83,7 @@ def choose_action(playerstate):
     tmprow = Qtable[playerstate]
 
     # limit random value updating using epsilon value
-    if ((random.uniform(0.0, 1.0) > EPSILON) or (max(tmprow)==0 )):
+    if (random.uniform(0.0, 1.0) > EPSILON):
         # choice action randomly 
         action = random.choice(ACTIONS)
 
