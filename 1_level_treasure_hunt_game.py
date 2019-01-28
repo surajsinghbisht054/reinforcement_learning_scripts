@@ -36,7 +36,7 @@ GAMMA    = 0.9                 # discount factor
 EPISODES = 20                  # EPISODE
 Debug    = False
 BIGREWARD = 1.0
-SMALLREWARD = 0.1 # small reward 
+SMALLREWARD = 0.0 # small reward 
 TIMESLEEP = 0.1
 CUTREWARD = 11.0 # divide reward after 11 steps
 
@@ -103,7 +103,7 @@ def choose_action(playerstate):
 def take_action(playerstate, action, count):
     #
     over = False
-    reward = 0
+    reward = -0.1
 
     # if action=left
     if action==ACTIONS[0]:
@@ -166,17 +166,17 @@ def main():
             # update
             print_updates(NS, episode, count, end=END)
 
+            # Formula
             if END:
                 qtarget = RW
             else:
-                # Formula
-                qtarget = RW + GAMMA * max(Qtable[PS])
+                qtarget = RW + (GAMMA * max(Qtable[NS]))
 
             # previous value
             prevalue = Qtable[PS][ACTIONS.index(AC)]
 
             # updated value
-            Qtable[PS][ACTIONS.index(AC)] += ALPHA *( qtarget-prevalue)
+            Qtable[PS][ACTIONS.index(AC)] = (((1-ALPHA)*prevalue)+(ALPHA*qtarget))
 
             count += 1
 

@@ -45,10 +45,10 @@ os.system('test')
 
 
 # Configuration
-ALPHA    = 0.01   # learning rate 
+ALPHA    = 0.1   # learning rate 
 GAMMA    = 0.9   # discount factor
 EPLISON  = 0.9   # limit the changes <-- Random Decision Rate
-EPISODES = 20    # total episodes to try
+EPISODES = 5    # total episodes to try
 ACTIONS  = [     # supported actions
         'left', 
         'right', 
@@ -57,8 +57,8 @@ ACTIONS  = [     # supported actions
     ]
 
 TIMESLEEP       = 0.001    # refresh sleep time
-MINUSPOINT      = -1.0    # heavy minus point, when hit the walls 
-PLUSPOINT       = 5.0     # plus point, in the end <-- Not that much important, because we are using negative reward approach
+MINUSPOINT      = -1.0      # heavy minus point, when hit the walls 
+PLUSPOINT       = 1.0     # plus point, in the end <-- Not that much important, because we are using negative reward approach
 LATEMINUSPOINT  = -0.1    # because of time 
 Debug           = False   # debug feature
 IValue          = [       # initial values
@@ -66,8 +66,14 @@ IValue          = [       # initial values
                     0,0
                     ]
 BACKUP          = 'test/dog_search_coordinates.qtable'
+OUTPUT          = True
 
-# (ALPHA*(( reward + GAMMA * pre_calculated_possibility) - pre_calculated_possibility) + pre_calculated_possibility)
+
+
+# 
+if not OUTPUT:
+    TIMESLEEP = 0
+
 
 # board to collect episode print data
 tmpboard = []
@@ -80,16 +86,16 @@ GROUND = [
     ['#' ,'#' ,'#' ,'#' ,'#' ,'#' ,'#' ,'#' ,'#' ,'#' ,'#' ,'#' ,'#' ,'#' ],
     ['#', '_' ,'#' ,'#' ,'_' ,'_' ,'#' ,'_' ,'_' ,'_' ,'_' ,'_' ,'_' , '#' ],
     ['#', '_' ,'#' ,'_' ,'_' ,'_' ,'#' ,'_' ,'#' ,'#' ,'_' ,'#' ,'#' , '#' ],
-    ['#', '_' ,'#' ,'_' ,'_' ,'_' ,'#' ,'_' ,'_' ,'#' ,'_' ,'#' ,'_' , '#' ],
-    ['#', '_' ,'#' ,'#' ,'_' ,'_' ,'#' ,'#' ,'_' ,'#' ,'_' ,'#' ,'_' , '#' ],
-    ['#', '_' ,'#' ,'#' ,'#' ,'_' ,'#' ,'#' ,'_' ,'#' ,'#' ,'#' ,'_' , '#' ],
-    ['#', '_' ,'#' ,'#' ,'#' ,'_' ,'#' ,'_' ,'_' ,'#' ,'_' ,'_' ,'_' , '#' ],
-    ['#', '_' ,'#' ,'_' ,'#' ,'_' ,'#' ,'_' ,'#' ,'#' ,'_' ,'_' ,'_' , '#' ],
+    ['#', '_' ,'#' ,'_' ,'#' ,'_' ,'#' ,'_' ,'_' ,'#' ,'_' ,'#' ,'_' , '#' ],
+    ['#', '_' ,'#' ,'_' ,'#' ,'_' ,'#' ,'#' ,'_' ,'#' ,'_' ,'#' ,'_' , '#' ],
+    ['#', '_' ,'#' ,'_' ,'#' ,'_' ,'#' ,'#' ,'_' ,'#' ,'#' ,'#' ,'_' , '#' ],
+    ['#', '_' ,'#' ,'_' ,'#' ,'_' ,'#' ,'_' ,'_' ,'#' ,'_' ,'_' ,'_' , '#' ],
+    ['#', '_' ,'#' ,'_' ,'#' ,'#' ,'#' ,'_' ,'#' ,'#' ,'_' ,'_' ,'_' , '#' ],
     ['#', '_' ,'#' ,'_' ,'#' ,'_' ,'#' ,'_' ,'_' ,'_' ,'#' ,'_' ,'_' , '#' ],
     ['#', '_' ,'#' ,'_' ,'_' ,'_' ,'#' ,'_' ,'_' ,'_' ,'#' ,'_' ,'#' , '#' ],
-    ['#', '_' ,'#' ,'_' ,'#' ,'_' ,'#' ,'#' ,'_' ,'#' ,'#' ,'_' ,'#' , '#' ],
-    ['#', '_' ,'#' ,'_' ,'#' ,'_' ,'#' ,'#' ,'_' ,'#' ,'#' ,'_' ,'_' , '#' ],
-    ['#', '_' ,'_' ,'_' ,'#' ,'_' ,'_' ,'_' ,'_' ,'_' ,'_' ,'_' ,'^' , '#' ],
+    ['#', '_' ,'#' ,'_' ,'#' ,'_' ,'#' ,'#' ,'#' ,'#' ,'#' ,'#' ,'#' , '#' ],
+    ['#', '_' ,'#' ,'#' ,'#' ,'#' ,'#' ,'#' ,'_' ,'#' ,'#' ,'_' ,'#' , '#' ],
+    ['#', '_' ,'_' ,'_' ,'_' ,'_' ,'_' ,'_' ,'_' ,'_' ,'_' ,'_' ,'^' , '#' ],
     ['#' ,'#' ,'#' ,'#' ,'#' ,'#' ,'#' ,'#' ,'#' ,'#' ,'#' ,'#' ,'#' ,'#' ],
 ]
 
@@ -160,7 +166,7 @@ def choose_action(PS):
     key = check_state(PS)
 
     # limit value updating rate
-    if (random.uniform(0.0, 1.0) > EPLISON) or (max(Qtable[key])==0):
+    if ((random.uniform(0.0, 1.0) > EPLISON) or (max(Qtable[key])==0)):
         action = random.choice(ACTIONS)
         if Debug: print "[+] Random Action Selecting", action
 
@@ -215,17 +221,25 @@ def get_feedback(PS, AC):
 
     return (_PS, RW, END)
 
-def learner(PS, RW, AC, END):
-    key = check_state(PS)
+def learner(PS, RW, AC, _PS, _AC ,END):
+    # PS = previous state player status
+    # RW = Reward
+    # AC = Action
+    # _PS = New state player status
+    # END = episode end or not
+    key = check_state(_PS)
 
     if END:
         qtarget = RW
     else:
-        qtarget = RW + GAMMA * max(Qtable[key])
-    pre_value = Qtable[key][ACTIONS.index(AC)]
+        qtarget = RW + (GAMMA * Qtable[key][ACTIONS.index(_AC)] )
 
-    # update value
+    # get previous state value
+    pre_value = Qtable[check_state(PS)][ACTIONS.index(AC)]
+
+    # update new state value
     Qtable[key][ACTIONS.index(AC)] += ALPHA * (qtarget - pre_value)
+
     return
 
 # main function
@@ -236,15 +250,21 @@ def main():
         PS = [1, 1]
         count = 0
         END = False
-        
+        AC = choose_action(PS)
         # training loop
         while not END:
-            AC = choose_action(PS)
+            # _PS = NEW State
+            # RW = Reward
             _PS, RW, END = get_feedback(PS, AC)
-            learner(PS, RW, AC, END)
+            # _AC = new state reward
+            _AC = choose_action(_PS)
+            learner(PS, RW, AC,_PS, _AC, END)
             PS = _PS
-            print_status(PS, episode, count, END)
+            AC = _AC
+            if OUTPUT:
+                print_status(PS, episode, count, END)
             count += 1
+        print_status(PS, episode, count, END)
     return
 
 # trigger 
