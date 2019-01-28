@@ -48,7 +48,7 @@ os.system('test')
 # Configuration
 ALPHA    = 0.5    # learning rate 
 GAMMA    = 0.9    # discount factor
-EPLISON  = 0.9    # limit the changes <-- Random Decision Rate
+EPLISON  = 0.95    # limit the changes <-- Random Decision Rate 0.9
 EPISODES = 10     # total episodes to try
 ACTIONS  = [      # supported actions
         'left', 
@@ -60,15 +60,15 @@ ACTIONS  = [      # supported actions
 TIMESLEEP       = 0.01    # refresh sleep time
 MINUSPOINT      = -5     # can set minus point, when hit the walls [Heavy Penatly] 
 PLUSPOINT       = 10     # plus point, in the end <-- Not that much important, because we are using negative reward approach
-LATEMINUSPOINT  = -1    # because of time 
+LATEMINUSPOINT  = -1    #i because of time 
 Debug           = False   # debug feature
 IValue          = [       # initial values
                     0,0,
                     0,0
                     ]
 BACKUP          = '' #'test/dog_search_coordinates.qtable'
-OUTPUT          = False
-NEUTRAL         = 1
+OUTPUT          = True
+NEUTRAL         = 4
 # Keep Record of Paths
 path_record = []
 
@@ -100,6 +100,8 @@ GROUND = [
     ['#', '_' ,'_' ,'_' ,'_' ,'_' ,'_' ,'_' ,'_' ,'_' ,'_' ,'_' ,'^' , '#' ],
     ['#' ,'#' ,'#' ,'#' ,'#' ,'#' ,'#' ,'#' ,'#' ,'#' ,'#' ,'#' ,'#' ,'#' ],
 ]
+
+
 
 if os.path.exists(BACKUP):
     tmpboard.append('[*] Using Pre-Calculated Weight.')
@@ -275,6 +277,8 @@ def main():
 
 # trigger 
 if __name__ == '__main__':
+    print_status([1,1], 0, 0, False)
+    raw_input('[*] Press Enter To Continue.')
     main()
     if BACKUP:
         f = open(BACKUP, 'w')
