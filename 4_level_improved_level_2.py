@@ -46,7 +46,7 @@ os.system('test')
 
 
 # Configuration
-ALPHA    = 0.1    # learning rate 
+ALPHA    = 0.5    # learning rate 
 GAMMA    = 0.9    # discount factor
 EPLISON  = 0.9    # limit the changes <-- Random Decision Rate
 EPISODES = 10     # total episodes to try
@@ -60,7 +60,7 @@ ACTIONS  = [      # supported actions
 TIMESLEEP       = 0.01    # refresh sleep time
 MINUSPOINT      = -5     # can set minus point, when hit the walls [Heavy Penatly] 
 PLUSPOINT       = 10     # plus point, in the end <-- Not that much important, because we are using negative reward approach
-LATEMINUSPOINT  = 0    # because of time 
+LATEMINUSPOINT  = -1    # because of time 
 Debug           = False   # debug feature
 IValue          = [       # initial values
                     0,0,
